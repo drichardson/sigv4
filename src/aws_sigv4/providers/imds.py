@@ -39,7 +39,7 @@ def load_from_imds() -> Credentials | None:
     """
     try:
         imds_token = _get_imds_token()
-    except (urllib.error.URLError, OSError):
+    except urllib.error.URLError, OSError:
         # Not on EC2, or IMDS disabled — skip silently.
         return None
 
