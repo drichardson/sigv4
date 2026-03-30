@@ -17,11 +17,7 @@ from aws_sigv4.credentials import (
 
 
 def _make_static_provider(creds: Credentials):
-    class _Provider:
-        def load(self):
-            return creds
-
-    return _Provider()
+    return lambda: creds
 
 
 def _make_expiring_creds(seconds_from_now: float) -> Credentials:
@@ -34,11 +30,7 @@ def _make_expiring_creds(seconds_from_now: float) -> Credentials:
 
 
 def _make_none_provider():
-    class _Provider:
-        def load(self):
-            return None
-
-    return _Provider()
+    return lambda: None
 
 
 # ---------------------------------------------------------------------------
@@ -124,14 +116,13 @@ def test_concurrent_gets_return_same_credentials():
     """Multiple threads calling get() concurrently should all succeed."""
     call_count = 0
 
-    class _CountingProvider:
-        def load(self):
-            nonlocal call_count
-            call_count += 1
-            time.sleep(0.01)  # simulate latency
-            return Credentials(access_key="AKI", secret_key="secret")
+    def counting_provider():
+        nonlocal call_count
+        call_count += 1
+        time.sleep(0.01)  # simulate latency
+        return Credentials(access_key="AKI", secret_key="secret")
 
-    rc = RefreshableCredentials(_CountingProvider())
+    rc = RefreshableCredentials(counting_provider)
     results = []
     errors = []
 

@@ -5,7 +5,7 @@
 Credential provider: shared credentials and config files.
 
 Reads ``~/.aws/credentials`` and ``~/.aws/config`` (or paths from
-``AWS_SHARED_CREDENTIALS_FILE`` / ``AWS_CONFIG_FILE``).  The profile is
+``AWS_SHARED_CREDENTIALS_FILE`` / ``AWS_CONFIG_FILE``). The profile is
 taken from ``AWS_PROFILE`` (defaulting to ``"default"``).
 """
 
@@ -16,33 +16,28 @@ from pathlib import Path
 from aws_sigv4.credentials import Credentials
 
 
-class ConfigFileProvider:
+def load_from_config_file() -> Credentials | None:
     """
     Load credentials from ``~/.aws/credentials`` and ``~/.aws/config``.
 
     Checks credentials file first (profile section), then config file
     (``[profile <name>]`` section for non-default profiles).
     """
+    profile = os.environ.get("AWS_PROFILE", "default")
 
-    def load(self) -> Credentials | None:
-        profile = os.environ.get("AWS_PROFILE", "default")
+    creds_file = Path(
+        os.environ.get("AWS_SHARED_CREDENTIALS_FILE", "~/.aws/credentials")
+    ).expanduser()
+    config_file = Path(os.environ.get("AWS_CONFIG_FILE", "~/.aws/config")).expanduser()
 
-        creds_file = Path(
-            os.environ.get("AWS_SHARED_CREDENTIALS_FILE", "~/.aws/credentials")
-        ).expanduser()
-        config_file = Path(
-            os.environ.get("AWS_CONFIG_FILE", "~/.aws/config")
-        ).expanduser()
-
-        # Try credentials file (sections are bare profile names).
-        creds = _read_credentials_from_file(creds_file, profile)
-        if creds:
-            return creds
-
-        # Try config file (sections are "profile <name>", except "default").
-        config_section = "default" if profile == "default" else f"profile {profile}"
-        creds = _read_credentials_from_file(config_file, config_section)
+    # Try credentials file (sections are bare profile names).
+    creds = _read_credentials_from_file(creds_file, profile)
+    if creds:
         return creds
+
+    # Try config file (sections are "profile <name>", except "default").
+    config_section = "default" if profile == "default" else f"profile {profile}"
+    return _read_credentials_from_file(config_file, config_section)
 
 
 def _read_credentials_from_file(path: Path, section: str) -> Credentials | None:

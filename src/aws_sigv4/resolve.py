@@ -8,11 +8,11 @@ Credential chain resolution.
 import logging
 
 from aws_sigv4.credentials import CredentialProvider, RefreshableCredentials
-from aws_sigv4.providers.env import EnvProvider
+from aws_sigv4.providers.env import load_from_env
 from aws_sigv4.providers.web_identity import WebIdentityProvider
-from aws_sigv4.providers.config_file import ConfigFileProvider
-from aws_sigv4.providers.container import ContainerProvider
-from aws_sigv4.providers.imds import IMDSProvider
+from aws_sigv4.providers.config_file import load_from_config_file
+from aws_sigv4.providers.container import load_from_container
+from aws_sigv4.providers.imds import load_from_imds
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +52,11 @@ def resolve_credentials(
     """
     if providers is None:
         providers = [
-            EnvProvider(),
-            WebIdentityProvider(),
-            ConfigFileProvider(),
-            ContainerProvider(),
-            IMDSProvider(),
+            load_from_env,
+            WebIdentityProvider().load,
+            load_from_config_file,
+            load_from_container,
+            load_from_imds,
         ]
 
     chain = _ChainProvider(providers)
@@ -69,23 +69,23 @@ class _ChainProvider:
     def __init__(self, providers: list[CredentialProvider]) -> None:
         self._providers = providers
 
-    def load(self):
+    def __call__(self):
         for provider in self._providers:
             try:
-                creds = provider.load()
+                creds = provider()
             except Exception:
                 logger.debug(
                     "Credential provider %s raised an exception; skipping.",
-                    type(provider).__name__,
+                    provider.__name__,
                     exc_info=True,
                 )
                 continue
             if creds is not None:
-                logger.debug("Credentials resolved via %s.", type(provider).__name__)
+                logger.debug("Credentials resolved via %s.", provider.__name__)
                 return creds
         raise RuntimeError(
             "No AWS credentials found. Tried: "
-            + ", ".join(type(p).__name__ for p in self._providers)
+            + ", ".join(p.__name__ for p in self._providers)
             + ". Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or configure "
             "an IAM role via IRSA, ECS task role, or EC2 instance profile."
         )

@@ -7,9 +7,9 @@ Credential types and the refreshable credential wrapper.
 
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +36,11 @@ class Credentials:
     expires_at: datetime | None = None  # timezone-aware UTC
 
 
-class CredentialProvider(Protocol):
-    """
-    A source of AWS credentials. Return ``None`` if this provider cannot
-    supply credentials in the current environment (e.g. env vars not set).
-    """
-
-    def load(self) -> Credentials | None: ...
+type CredentialProvider = Callable[[], Credentials | None]
+"""
+A callable that returns :class:`Credentials` or ``None`` if credentials are
+not available in the current environment (e.g. env vars not set).
+"""
 
 
 class CredentialsExpiredError(Exception):
@@ -68,7 +66,7 @@ class RefreshableCredentials:
     """
 
     def __init__(self, provider: CredentialProvider) -> None:
-        self._provider = provider
+        self._provider: CredentialProvider = provider
         self._credentials: Credentials | None = None
         self._lock = threading.Lock()
 
@@ -175,7 +173,7 @@ class RefreshableCredentials:
                 if remaining > _MANDATORY_REFRESH_SECONDS:
                     return
 
-            new_creds = self._provider.load()
+            new_creds = self._provider()
             if new_creds is None:
                 raise CredentialsExpiredError(
                     "Credential provider returned None during refresh. "

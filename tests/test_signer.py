@@ -10,11 +10,7 @@ from aws_sigv4 import Credentials, RefreshableCredentials, Signer
 
 
 def _static_refreshable(creds: Credentials) -> RefreshableCredentials:
-    class _Provider:
-        def load(self):
-            return creds
-
-    return RefreshableCredentials(_Provider())
+    return RefreshableCredentials(lambda: creds)
 
 
 _CREDS = Credentials(

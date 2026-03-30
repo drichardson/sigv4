@@ -13,22 +13,18 @@ import os
 from aws_sigv4.credentials import Credentials
 
 
-class EnvProvider:
+def load_from_env() -> Credentials | None:
     """Load credentials from environment variables."""
+    access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+    secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
-    def load(self) -> Credentials | None:
-        access_key = os.environ.get("AWS_ACCESS_KEY_ID")
-        secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    if not access_key or not secret_key:
+        return None
 
-        if not access_key or not secret_key:
-            return None
+    token = os.environ.get("AWS_SESSION_TOKEN") or os.environ.get("AWS_SECURITY_TOKEN")
 
-        token = os.environ.get("AWS_SESSION_TOKEN") or os.environ.get(
-            "AWS_SECURITY_TOKEN"
-        )
-
-        return Credentials(
-            access_key=access_key,
-            secret_key=secret_key,
-            token=token or None,
-        )
+    return Credentials(
+        access_key=access_key,
+        secret_key=secret_key,
+        token=token or None,
+    )

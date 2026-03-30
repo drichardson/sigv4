@@ -30,28 +30,26 @@ _TOKEN_TTL_SECONDS = 21600  # 6 hours
 _CONNECT_TIMEOUT = 1  # fail fast on non-EC2 hosts
 
 
-class IMDSProvider:
+def load_from_imds() -> Credentials | None:
     """
     Load credentials from the EC2 Instance Metadata Service (IMDSv2).
 
     Only succeeds when running on an EC2 instance. Times out quickly
     (1 second) on other hosts so it doesn't slow down the credential chain.
     """
+    try:
+        imds_token = _get_imds_token()
+    except (urllib.error.URLError, OSError):
+        # Not on EC2, or IMDS disabled — skip silently.
+        return None
 
-    def load(self) -> Credentials | None:
-        try:
-            imds_token = _get_imds_token()
-        except urllib.error.URLError, OSError:
-            # Not on EC2, or IMDS disabled — skip silently.
-            return None
+    try:
+        role_name = _get_role_name(imds_token)
+    except (urllib.error.URLError, OSError) as e:
+        logger.debug("IMDS: no IAM role attached to this instance: %s", e)
+        return None
 
-        try:
-            role_name = _get_role_name(imds_token)
-        except (urllib.error.URLError, OSError) as e:
-            logger.debug("IMDS: no IAM role attached to this instance: %s", e)
-            return None
-
-        return _get_role_credentials(imds_token, role_name)
+    return _get_role_credentials(imds_token, role_name)
 
 
 def _get_imds_token() -> str:

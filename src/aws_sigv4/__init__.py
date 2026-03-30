@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-aws-sigv4 — AWS Signature Version 4 signing with zero dependencies.
+aws-sigv4 — AWS Signature Version 4 signing with zero Python package dependencies.
 
 Public API::
 
