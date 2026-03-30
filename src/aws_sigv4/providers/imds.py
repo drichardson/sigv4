@@ -29,7 +29,10 @@ from aws_sigv4.credentials import Credentials, parse_utc_datetime
 logger = logging.getLogger(__name__)
 
 _IMDS_BASE = "http://169.254.169.254/latest"
-_TOKEN_TTL_SECONDS = 21600  # 6 hours
+# Maximum allowed TTL for an IMDSv2 session token. Using the maximum to
+# minimise token-refresh overhead. The AWS examples also use this value.
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+_TOKEN_TTL_SECONDS = 21600  # 6 hours (maximum)
 _CONNECT_TIMEOUT = 1  # fail fast on non-EC2 hosts
 
 
@@ -43,26 +46,29 @@ def try_load_from_imds() -> Credentials | None:
     """
     try:
         imds_token = _get_imds_token()
-    except OSError as e:
+    except urllib.error.URLError as e:
         if _is_not_present(e):
             return None
         raise
 
     try:
         role_name = _get_role_name(imds_token)
-    except (urllib.error.URLError, OSError) as e:
+    except urllib.error.URLError as e:
         logger.debug("IMDS: no IAM role attached to this instance: %s", e)
         return None
 
     return _get_role_credentials(imds_token, role_name)
 
 
-def _is_not_present(exc: OSError) -> bool:
+def _is_not_present(exc: urllib.error.URLError) -> bool:
     """
-    Return True if the exception indicates IMDS is simply not present on
+    Return ``True`` if the exception indicates IMDS is simply not present on
     this host (connection refused, network unreachable, host unreachable).
     These are expected on non-EC2 hosts and should be treated as
     "provider not available" rather than an error.
+
+    ``urllib.error.URLError`` wraps the underlying socket error in its
+    ``reason`` attribute. We inspect that to get the ``errno``.
     """
     not_present_errnos = {
         errno.ECONNREFUSED,  # connection refused — nothing listening
@@ -71,9 +77,7 @@ def _is_not_present(exc: OSError) -> bool:
         getattr(errno, "ENONET", None),  # no route to host (Linux only)
     }
     not_present_errnos.discard(None)
-    # urllib wraps socket errors in URLError; unwrap to get the errno.
-    cause = exc.__cause__ if exc.__cause__ is not None else exc
-    return getattr(cause, "errno", None) in not_present_errnos
+    return getattr(exc.reason, "errno", None) in not_present_errnos
 
 
 def _get_imds_token() -> str:
@@ -109,15 +113,22 @@ def _get_role_credentials(imds_token: str, role_name: str) -> Credentials:
         data = json.loads(resp.read())
 
     if data.get("Code") != "Success":
+        raise RuntimeError(f"IMDS returned non-success code for role {role_name!r}")
+
+    access_key = data.get("AccessKeyId")
+    secret_key = data.get("SecretAccessKey")
+    if not access_key or not secret_key:
+        keys = list(data.keys())
         raise RuntimeError(
-            f"IMDS returned non-success code for role {role_name!r}: {data}"
+            f"IMDS credentials response missing AccessKeyId/SecretAccessKey. "
+            f"Keys present: {keys}"
         )
 
     expiration = data.get("Expiration", "")
 
     return Credentials(
-        access_key=data["AccessKeyId"],
-        secret_key=data["SecretAccessKey"],
+        access_key=access_key,
+        secret_key=secret_key,
         token=data.get("Token"),
         expires_at=parse_utc_datetime(expiration) if expiration else None,
     )
