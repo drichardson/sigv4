@@ -8,13 +8,17 @@ Read `DESIGN.md` first for the architecture, two-layer API, and credential chain
 uv run pytest                            # run tests
 uv run mypy src tests                    # type checking
 uv run ruff format && uv run ruff check  # format and lint
+bash scripts/check-no-runtime-deps.sh   # enforce zero package dependencies
 ```
 
 ## Conventions
 
 - **Python 3.14+** — use modern syntax: `type` aliases, `match` statements.
-- **Zero runtime dependencies** — stdlib only. Do not add any third-party
-  runtime dependencies. Dev-only deps (pytest, mypy, ruff) are fine.
+- **Zero Python package dependencies** — stdlib only. Do not add any entries
+  to the `[project] dependencies` list in `pyproject.toml`. This is a
+  first-class design constraint (see `DESIGN.md`). CI enforces this via
+  `scripts/check-no-runtime-deps.sh` and will fail if a dependency is added.
+  Dev-only deps under `[dependency-groups]` (pytest, mypy, ruff) are fine.
 - **Sync-only** — credential fetching uses `urllib.request`. The signing
   itself is pure computation with no I/O.
 - **Structural typing** — prefer `Protocol` over inheritance for interfaces
