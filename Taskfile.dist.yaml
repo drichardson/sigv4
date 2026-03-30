@@ -6,10 +6,6 @@ tasks:
     desc: Run tests with coverage
     cmd: uv run pytest
     
-  test:lowest:
-    desc: Run tests against lowest direct dependencies
-    cmd: uv run --resolution lowest-direct pytest
-
   lint:
     desc: Check formatting and lint
     cmd: uv run ruff format --check && uv run ruff check

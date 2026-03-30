@@ -6,7 +6,6 @@ Read `DESIGN.md` first for the architecture, two-layer API, and credential chain
 
 ```sh
 task test          # run tests with coverage (100% required)
-task test:lowest   # run tests against lowest direct dependencies
 task lint          # check formatting and lint
 task format        # auto-format code
 task typecheck     # run mypy type checker

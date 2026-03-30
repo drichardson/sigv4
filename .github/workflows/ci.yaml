@@ -33,7 +33,9 @@ jobs:
       uses: arduino/setup-task@v2
 
     - name: Run Tests
-      run: ${{ matrix.resolution == 'lowest-direct' && 'task test:lowest' || 'task test' }}
+      run: task test
+      env:
+        UV_RESOLUTION: ${{ matrix.resolution == 'lowest-direct' && 'lowest-direct' || '' }}
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
