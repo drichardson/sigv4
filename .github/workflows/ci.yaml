@@ -26,8 +26,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install go-task
+      uses: arduino/setup-task@v2
+
     - name: Run Tests
-      run: uv run ${{ matrix.resolution == 'lowest-direct' && '--resolution lowest-direct' || '' }} pytest
+      run: ${{ matrix.resolution == 'lowest-direct' && 'task test:lowest' || 'task test' }}
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
@@ -52,16 +55,17 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@v7
 
+    - name: Install go-task
+      uses: arduino/setup-task@v2
+
     - name: Formatting and checks
-      run: |
-        uv run ruff format --check
-        uv run ruff check
+      run: task lint
 
     - name: Check Types
-      run: uv run mypy src tests
+      run: task typecheck
 
     - name: Check no runtime dependencies
-      run: scripts/check-no-runtime-deps.sh
+      run: task check-deps
 
   check:
     if: always()

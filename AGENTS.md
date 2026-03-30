@@ -5,11 +5,16 @@ Read `DESIGN.md` first for the architecture, two-layer API, and credential chain
 ## Development Commands
 
 ```sh
-uv run pytest                            # run tests (includes coverage check)
-uv run mypy src tests                    # type checking
-uv run ruff format && uv run ruff check  # format and lint
-bash scripts/check-no-runtime-deps.sh   # enforce zero package dependencies
+task test          # run tests with coverage (100% required)
+task test:lowest   # run tests against lowest direct dependencies
+task lint          # check formatting and lint
+task format        # auto-format code
+task typecheck     # run mypy type checker
+task check-deps    # enforce zero Python package runtime dependencies
+task check         # run all of the above
 ```
+
+All tasks are defined in ``Taskfile.dist.yaml``. CI uses the same tasks.
 
 ## Conventions
 
