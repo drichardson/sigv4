@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Sync the vendored AWS SigV4 test suite from botocore.
 #
-# Run manually or via .github/workflows/sync-test-suite.yaml (monthly).
-#
 # If changes are found, creates a branch, commits the update, pushes, and
 # opens a draft PR using the GitHub CLI (gh).
 #
