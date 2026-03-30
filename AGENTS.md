@@ -29,6 +29,9 @@ bash scripts/check-no-runtime-deps.sh   # enforce zero package dependencies
   mutations to `_credentials` must be inside the lock.
 - **SPDX headers** — all source files start with the SPDX copyright and
   license identifier comments.
+- **Docstrings** — use reStructuredText (RST) markup, which is the Python
+  standard. Inline code uses double backticks: ````~/.aws/credentials````.
+  Single backticks in RST mean a cross-reference, not inline code.
 
 ## When making changes always use Pull Requests
 
