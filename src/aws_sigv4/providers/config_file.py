@@ -16,7 +16,7 @@ from pathlib import Path
 from aws_sigv4.credentials import Credentials
 
 
-def load_from_config_file() -> Credentials | None:
+def try_load_from_config_file() -> Credentials | None:
     """
     Load credentials from ``~/.aws/credentials`` and ``~/.aws/config``.
 

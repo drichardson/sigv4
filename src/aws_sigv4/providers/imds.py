@@ -24,9 +24,7 @@ import json
 import logging
 import urllib.error
 import urllib.request
-from datetime import UTC, datetime
-
-from aws_sigv4.credentials import Credentials
+from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ _TOKEN_TTL_SECONDS = 21600  # 6 hours
 _CONNECT_TIMEOUT = 1  # fail fast on non-EC2 hosts
 
 
-def load_from_imds() -> Credentials | None:
+def try_load_from_imds() -> Credentials | None:
     """
     Load credentials from the EC2 Instance Metadata Service (IMDSv2).
 
@@ -116,15 +114,10 @@ def _get_role_credentials(imds_token: str, role_name: str) -> Credentials:
         )
 
     expiration = data.get("Expiration", "")
-    expires_at: datetime | None = None
-    if expiration:
-        expires_at = datetime.fromisoformat(expiration.replace("Z", "+00:00"))
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=UTC)
 
     return Credentials(
         access_key=data["AccessKeyId"],
         secret_key=data["SecretAccessKey"],
         token=data.get("Token"),
-        expires_at=expires_at,
+        expires_at=parse_utc_datetime(expiration) if expiration else None,
     )

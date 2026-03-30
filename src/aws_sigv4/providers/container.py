@@ -26,14 +26,12 @@ import logging
 import os
 import urllib.error
 import urllib.request
-from datetime import UTC, datetime
-
-from aws_sigv4.credentials import Credentials
+from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
 logger = logging.getLogger(__name__)
 
 
-def load_from_container() -> Credentials | None:
+def try_load_from_container() -> Credentials | None:
     """
     Load credentials from the container credential endpoint.
 
@@ -95,15 +93,9 @@ def _parse_container_response(data: dict) -> Credentials:
             f"Keys present: {keys}"
         )
 
-    expires_at: datetime | None = None
-    if expiration:
-        expires_at = datetime.fromisoformat(expiration.replace("Z", "+00:00"))
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=UTC)
-
     return Credentials(
         access_key=access_key,
         secret_key=secret_key,
         token=token or None,
-        expires_at=expires_at,
+        expires_at=parse_utc_datetime(expiration) if expiration else None,
     )

@@ -22,9 +22,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
-from datetime import UTC, datetime
-
-from aws_sigv4.credentials import Credentials
+from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +66,7 @@ class WebIdentityProvider:
         self._role_session_name = role_session_name
         self._sts_endpoint = sts_endpoint
 
-    def load(self) -> Credentials | None:
+    def try_load(self) -> Credentials | None:
         token_file = self._token_file or os.environ.get("AWS_WEB_IDENTITY_TOKEN_FILE")
         role_arn = self._role_arn or os.environ.get("AWS_ROLE_ARN")
 
@@ -177,13 +175,9 @@ def _parse_sts_response(xml_bytes: bytes) -> Credentials:
         "./sts:AssumeRoleWithWebIdentityResult/sts:Credentials/sts:Expiration"
     )
 
-    expires_at = datetime.fromisoformat(expiration_str.replace("Z", "+00:00"))
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=UTC)
-
     return Credentials(
         access_key=access_key,
         secret_key=secret_key,
         token=token,
-        expires_at=expires_at,
+        expires_at=parse_utc_datetime(expiration_str),
     )

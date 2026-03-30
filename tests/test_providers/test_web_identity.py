@@ -27,7 +27,7 @@ _STS_RESPONSE = b"""
 def test_returns_none_when_env_vars_missing(monkeypatch):
     monkeypatch.delenv("AWS_WEB_IDENTITY_TOKEN_FILE", raising=False)
     monkeypatch.delenv("AWS_ROLE_ARN", raising=False)
-    assert WebIdentityProvider().load() is None
+    assert WebIdentityProvider().try_load() is None
 
 
 def test_returns_none_when_only_token_file(monkeypatch, tmp_path):
@@ -35,7 +35,7 @@ def test_returns_none_when_only_token_file(monkeypatch, tmp_path):
     token_file.write_text("myjwt")
     monkeypatch.setenv("AWS_WEB_IDENTITY_TOKEN_FILE", str(token_file))
     monkeypatch.delenv("AWS_ROLE_ARN", raising=False)
-    assert WebIdentityProvider().load() is None
+    assert WebIdentityProvider().try_load() is None
 
 
 def test_parse_sts_response():
@@ -58,7 +58,7 @@ def test_load_calls_sts(monkeypatch, tmp_path):
         "aws_sigv4.providers.web_identity._assume_role_with_web_identity"
     ) as mock_sts:
         mock_sts.return_value = _parse_sts_response(_STS_RESPONSE)
-        creds = WebIdentityProvider().load()
+        creds = WebIdentityProvider().try_load()
 
     assert creds is not None
     assert creds.access_key == "STS_AKID"
@@ -73,4 +73,4 @@ def test_token_file_not_found_raises(monkeypatch):
     monkeypatch.setenv("AWS_ROLE_ARN", "arn:aws:iam::123456789012:role/MyRole")
 
     with pytest.raises(RuntimeError, match="Failed to read web identity token file"):
-        WebIdentityProvider().load()
+        WebIdentityProvider().try_load()

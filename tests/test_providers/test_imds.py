@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from aws_sigv4.providers.imds import _is_not_present, load_from_imds
+from aws_sigv4.providers.imds import _is_not_present, try_load_from_imds
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ def test_urlwrapped_connection_refused_is_not_present():
 
 
 # ---------------------------------------------------------------------------
-# load_from_imds behaviour
+# try_load_from_imds behaviour
 # ---------------------------------------------------------------------------
 
 
@@ -71,7 +71,7 @@ def test_returns_none_when_connection_refused():
     err = OSError(errno.ECONNREFUSED, "Connection refused")
     err.errno = errno.ECONNREFUSED
     with patch("aws_sigv4.providers.imds._get_imds_token", side_effect=err):
-        assert load_from_imds() is None
+        assert try_load_from_imds() is None
 
 
 def test_returns_none_when_host_unreachable():
@@ -79,7 +79,7 @@ def test_returns_none_when_host_unreachable():
     err = OSError(errno.EHOSTUNREACH, "No route to host")
     err.errno = errno.EHOSTUNREACH
     with patch("aws_sigv4.providers.imds._get_imds_token", side_effect=err):
-        assert load_from_imds() is None
+        assert try_load_from_imds() is None
 
 
 def test_raises_when_timeout():
@@ -88,4 +88,4 @@ def test_raises_when_timeout():
     err.errno = errno.ETIMEDOUT
     with patch("aws_sigv4.providers.imds._get_imds_token", side_effect=err):
         with pytest.raises(OSError):
-            load_from_imds()
+            try_load_from_imds()

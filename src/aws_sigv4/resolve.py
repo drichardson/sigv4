@@ -8,11 +8,11 @@ Credential chain resolution.
 import logging
 
 from aws_sigv4.credentials import CredentialProvider, RefreshableCredentials
-from aws_sigv4.providers.env import load_from_env
+from aws_sigv4.providers.env import try_load_from_env
 from aws_sigv4.providers.web_identity import WebIdentityProvider
-from aws_sigv4.providers.config_file import load_from_config_file
-from aws_sigv4.providers.container import load_from_container
-from aws_sigv4.providers.imds import load_from_imds
+from aws_sigv4.providers.config_file import try_load_from_config_file
+from aws_sigv4.providers.container import try_load_from_container
+from aws_sigv4.providers.imds import try_load_from_imds
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +52,11 @@ def resolve_credentials(
     """
     if providers is None:
         providers = [
-            load_from_env,
-            WebIdentityProvider().load,
-            load_from_config_file,
-            load_from_container,
-            load_from_imds,
+            try_load_from_env,
+            WebIdentityProvider().try_load,
+            try_load_from_config_file,
+            try_load_from_container,
+            try_load_from_imds,
         ]
 
     chain = _ChainProvider(providers)

@@ -180,3 +180,15 @@ class RefreshableCredentials:
                     "Check your AWS credentials configuration."
                 )
             self._credentials = new_creds
+
+
+def parse_utc_datetime(value: str) -> datetime:
+    """Parse an ISO 8601 datetime string and return a timezone-aware UTC datetime.
+
+    Handles the ``Z`` suffix used by AWS APIs (e.g. ``"2026-01-01T00:00:00Z"``),
+    which ``datetime.fromisoformat`` does not accept prior to Python 3.11.
+    """
+    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt
