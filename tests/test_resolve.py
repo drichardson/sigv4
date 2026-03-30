@@ -78,3 +78,15 @@ def test_chain_does_not_continue_after_exception():
         rc.get()
 
     assert called == [], "provider after a raising provider must not be called"
+
+
+def test_resolve_credentials_with_no_args_uses_default_chain(monkeypatch):
+    """Calling resolve_credentials() with no arguments uses the default provider chain."""
+    # Set env vars so the first provider (EnvProvider) succeeds immediately.
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "DEFAULT_AKID")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "default_secret")
+    monkeypatch.delenv("AWS_SESSION_TOKEN", raising=False)
+
+    rc = resolve_credentials()  # no providers= argument -> hits the None branch
+    creds = rc.get()
+    assert creds.access_key == "DEFAULT_AKID"

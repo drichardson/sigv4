@@ -36,6 +36,67 @@ _STS_ERROR_RESPONSE = b"""
 """
 
 
+def test_regional_sts_endpoint_used_when_configured(monkeypatch, tmp_path):
+    """AWS_STS_REGIONAL_ENDPOINTS=regional + region -> regional STS endpoint."""
+    from aws_sigv4.providers.web_identity import _resolve_sts_endpoint
+
+    monkeypatch.setenv("AWS_STS_REGIONAL_ENDPOINTS", "regional")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "eu-west-1")
+    monkeypatch.delenv("AWS_REGION", raising=False)
+
+    endpoint = _resolve_sts_endpoint()
+    assert endpoint == "https://sts.eu-west-1.amazonaws.com/"
+
+
+def test_regional_sts_endpoint_falls_back_to_global_when_no_region(monkeypatch):
+    """AWS_STS_REGIONAL_ENDPOINTS=regional but no region -> global endpoint."""
+    from aws_sigv4.providers.web_identity import _resolve_sts_endpoint, _STS_ENDPOINT
+
+    monkeypatch.setenv("AWS_STS_REGIONAL_ENDPOINTS", "regional")
+    monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
+    monkeypatch.delenv("AWS_REGION", raising=False)
+
+    assert _resolve_sts_endpoint() == _STS_ENDPOINT
+
+
+def test_sts_xml_without_namespace_parsed(tmp_path):
+    """STS response without xmlns declaration still parses via fallback ns_map."""
+    from aws_sigv4.providers.web_identity import _parse_sts_response
+
+    # Same structure but without the xmlns attribute.
+    xml = b"""
+<AssumeRoleWithWebIdentityResponse>
+  <AssumeRoleWithWebIdentityResult>
+    <Credentials>
+      <AccessKeyId>NO_NS_AKID</AccessKeyId>
+      <SecretAccessKey>NO_NS_SECRET</SecretAccessKey>
+      <SessionToken>NO_NS_TOKEN</SessionToken>
+      <Expiration>2099-01-01T00:00:00Z</Expiration>
+    </Credentials>
+  </AssumeRoleWithWebIdentityResult>
+</AssumeRoleWithWebIdentityResponse>
+"""
+    creds = _parse_sts_response(xml)
+    assert creds.access_key == "NO_NS_AKID"
+
+
+def test_sts_xml_missing_field_raises(tmp_path):
+    """STS response missing a required field -> RuntimeError from find()."""
+    from aws_sigv4.providers.web_identity import _parse_sts_response
+
+    xml = b"""
+<AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+  <AssumeRoleWithWebIdentityResult>
+    <Credentials>
+      <AccessKeyId>AKID</AccessKeyId>
+    </Credentials>
+  </AssumeRoleWithWebIdentityResult>
+</AssumeRoleWithWebIdentityResponse>
+"""
+    with pytest.raises(RuntimeError, match="could not find"):
+        _parse_sts_response(xml)
+
+
 def test_returns_none_when_env_vars_missing(monkeypatch):
     monkeypatch.delenv("AWS_WEB_IDENTITY_TOKEN_FILE", raising=False)
     monkeypatch.delenv("AWS_ROLE_ARN", raising=False)

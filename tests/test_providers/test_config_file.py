@@ -151,3 +151,20 @@ def test_missing_profile_returns_none(tmp_path, monkeypatch):
     monkeypatch.setenv("AWS_PROFILE", "nonexistent")
 
     assert try_load_from_config_file() is None
+
+
+def test_section_missing_keys_returns_none(tmp_path, monkeypatch):
+    """Section exists but is missing the key fields -- should return None."""
+    creds_file = _write(
+        tmp_path,
+        "credentials",
+        """
+        [default]
+        some_other_key = value
+        """,
+    )
+    monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", str(creds_file))
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "config"))
+    monkeypatch.delenv("AWS_PROFILE", raising=False)
+
+    assert try_load_from_config_file() is None

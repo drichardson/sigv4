@@ -13,6 +13,7 @@ from aws_sigv4.credentials import (
     Credentials,
     CredentialsExpiredError,
     RefreshableCredentials,
+    parse_utc_datetime,
 )
 
 
@@ -41,6 +42,14 @@ def _make_none_provider():
 def test_not_ready_before_first_fetch():
     provider = _make_static_provider(Credentials(access_key="AKI", secret_key="secret"))
     rc = RefreshableCredentials(provider)
+    assert not rc.is_ready
+
+
+def test_is_ready_false_when_credentials_expired():
+    """is_ready must return False when credentials exist but are past expiry."""
+    expired = _make_expiring_creds(-1)  # expired 1 second ago
+    rc = RefreshableCredentials(_make_static_provider(expired))
+    rc._credentials = expired
     assert not rc.is_ready
 
 
@@ -243,3 +252,52 @@ def test_no_refresh_when_credentials_are_fresh():
 
     rc.get()
     assert refresh_count == 0  # no refresh should have occurred
+
+
+def test_double_checked_locking_skips_redundant_refresh():
+    """If a concurrent refresh already brought creds outside the advisory window,
+    _do_refresh must return early without calling the provider again."""
+    refresh_count = 0
+
+    def provider():
+        nonlocal refresh_count
+        refresh_count += 1
+        # Return creds well outside the advisory window so the lock-holder
+        # skips further refreshes.
+        return Credentials(
+            access_key="FRESH",
+            secret_key="secret",
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+
+    rc = RefreshableCredentials(provider)
+    rc.refresh()  # first refresh
+    assert refresh_count == 1
+
+    # Second refresh: double-checked locking should detect creds are fresh
+    # and return early without calling the provider.
+    rc.refresh()
+    assert refresh_count == 1
+
+
+# ---------------------------------------------------------------------------
+# parse_utc_datetime
+# ---------------------------------------------------------------------------
+
+
+def test_parse_utc_datetime_with_z_suffix():
+    dt = parse_utc_datetime("2099-01-01T00:00:00Z")
+    assert dt.tzinfo is not None
+    assert dt.year == 2099
+
+
+def test_parse_utc_datetime_with_offset():
+    dt = parse_utc_datetime("2099-01-01T00:00:00+00:00")
+    assert dt.tzinfo is not None
+
+
+def test_parse_utc_datetime_naive_gets_utc():
+    """A datetime string without timezone info must have UTC attached."""
+    dt = parse_utc_datetime("2099-01-01T00:00:00")
+    assert dt.tzinfo is not None
+    assert dt.tzinfo == UTC

@@ -29,6 +29,20 @@ jobs:
     - name: Run Tests
       run: uv run ${{ matrix.resolution == 'lowest-direct' && '--resolution lowest-direct' || '' }} pytest
 
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report-${{ matrix.python-version }}-${{ matrix.resolution }}
+        path: htmlcov/
+
+    - name: Coverage summary on PR
+      uses: orgoro/coverage@v3.2
+      if: github.event_name == 'pull_request' && matrix.python-version == '3.14' && matrix.resolution == 'locked'
+      with:
+        coverageFile: coverage.xml
+        token: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     runs-on: ubuntu-latest
 

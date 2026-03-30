@@ -70,6 +70,12 @@ def test_canonical_uri_encoding():
     assert _canonical_uri("/foo/bar") == "/foo/bar"
 
 
+def test_canonical_uri_dotdot_at_root_does_not_go_above_root():
+    """Multiple '..' segments that exhaust the resolved stack must not raise."""
+    # /../../foo: second '..' finds resolved empty and correctly skips the pop.
+    assert _canonical_uri("/../../foo") == "/foo"
+
+
 def test_canonical_query_string_empty():
     assert _canonical_query_string("") == ""
 
@@ -282,3 +288,19 @@ def test_deterministic():
         timestamp=_TIMESTAMP,
     )
     assert sign_headers(**kwargs) == sign_headers(**kwargs)
+
+
+def test_sign_headers_without_explicit_timestamp():
+    """When timestamp is omitted sign_headers uses datetime.now(UTC)."""
+    result = sign_headers(
+        method="GET",
+        url="https://example.amazonaws.com/",
+        headers={"host": "example.amazonaws.com"},
+        body=b"",
+        region=_REGION,
+        service=_SERVICE,
+        credentials=_CREDS,
+        # no timestamp= — exercises the datetime.now(UTC) branch
+    )
+    assert "Authorization" in result
+    assert "X-Amz-Date" in result

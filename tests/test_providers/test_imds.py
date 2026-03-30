@@ -161,6 +161,21 @@ def test_raises_when_credentials_code_not_success(httpserver):
         try_load_from_imds()
 
 
+def test_raises_when_token_request_times_out(httpserver):
+    """URLError that is NOT a not-present error (e.g. timeout simulation) -- raise."""
+    import urllib.error
+
+    from unittest.mock import patch
+
+    timeout_err = urllib.error.URLError(OSError(errno.ETIMEDOUT, "timed out"))
+    timeout_err.reason = OSError(errno.ETIMEDOUT, "timed out")
+    timeout_err.reason.errno = errno.ETIMEDOUT
+
+    with patch("aws_sigv4.providers.imds._get_imds_token", side_effect=timeout_err):
+        with pytest.raises(urllib.error.URLError):
+            try_load_from_imds()
+
+
 def test_returns_none_when_connection_refused(monkeypatch):
     """Nothing listening on the port -- connection refused -> return None.
 

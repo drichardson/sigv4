@@ -43,7 +43,7 @@ build-backend = "uv_build"
 ignore = ["G004"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=aws_sigv4 --cov-report=term-missing --cov-fail-under=95"
+addopts = "--cov=aws_sigv4 --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=99"
 
 [tool.coverage.run]
 source = ["aws_sigv4"]

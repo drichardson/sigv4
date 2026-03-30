@@ -150,12 +150,15 @@ def _parse_sts_response(xml_bytes: bytes) -> Credentials:
     ns = {"sts": _STS_NS}
 
     def find(path: str) -> str:
-        # Try with namespace prefix first, then without (for responses that
-        # omit the xmlns declaration).
-        for ns_map in (ns, {}):
-            node = root.find(path, ns_map)
-            if node is not None and node.text is not None:
-                return node.text
+        # Try with namespace prefix first, then fall back to a bare path
+        # (for responses that omit the xmlns declaration).
+        node = root.find(path, ns)
+        if node is not None and node.text is not None:
+            return node.text
+        bare_path = path.replace("sts:", "")
+        node = root.find(bare_path)
+        if node is not None and node.text is not None:
+            return node.text
         raise RuntimeError(
             f"Unexpected STS response — could not find {path!r} in:\n"
             + ET.tostring(root, encoding="unicode")
