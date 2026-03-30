@@ -31,6 +31,7 @@ dev = [
     "pytest>=8",
     "mypy>=1.0.0",
     "ruff",
+    "pytest-cov>=7.1.0",
 ]
 
 [build-system]
@@ -39,3 +40,14 @@ build-backend = "uv_build"
 
 [tool.ruff.lint]
 ignore = ["G004"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=aws_sigv4 --cov-report=term-missing --cov-fail-under=79"
+
+[tool.coverage.run]
+source = ["aws_sigv4"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

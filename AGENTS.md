@@ -5,7 +5,7 @@ Read `DESIGN.md` first for the architecture, two-layer API, and credential chain
 ## Development Commands
 
 ```sh
-uv run pytest                            # run tests
+uv run pytest                            # run tests (includes coverage check)
 uv run mypy src tests                    # type checking
 uv run ruff format && uv run ruff check  # format and lint
 bash scripts/check-no-runtime-deps.sh   # enforce zero package dependencies
