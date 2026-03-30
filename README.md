@@ -67,7 +67,7 @@ Credentials are resolved in this order:
 1. **Environment variables** — `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` + optional `AWS_SESSION_TOKEN`
 2. **IRSA** (EKS) — `AWS_WEB_IDENTITY_TOKEN_FILE` + `AWS_ROLE_ARN` → STS `AssumeRoleWithWebIdentity`
 3. **Config file** — `~/.aws/credentials` and `~/.aws/config` (respects `AWS_PROFILE`)
-4. **ECS container role** — `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
+4. **Container credential endpoint** — `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` / `AWS_CONTAINER_CREDENTIALS_FULL_URI` (ECS task roles, EKS Pod Identity, and compatible runtimes)
 5. **EC2 instance profile** — IMDSv2 at `169.254.169.254`
 
 ## Observability and Pre-warming

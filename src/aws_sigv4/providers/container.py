@@ -2,14 +2,23 @@
 # SPDX-License-Identifier: MIT
 
 """
-Credential provider: ECS container task role.
+Credential provider: container credential endpoint.
 
-When running inside an ECS task with an IAM task role, the ECS agent exposes
-a local HTTP endpoint that vends temporary credentials. The endpoint URI is
-injected via environment variable.
+Fetches temporary credentials from a local HTTP endpoint whose URI is injected
+via environment variable. This mechanism is used by:
 
-Reference:
-  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+- **ECS tasks** — the ECS agent sets ``AWS_CONTAINER_CREDENTIALS_RELATIVE_URI``
+  pointing to ``http://169.254.170.2/...``
+  (https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
+
+- **EKS Pod Identity** — the EKS Pod Identity Agent sets
+  ``AWS_CONTAINER_CREDENTIALS_FULL_URI`` pointing to
+  ``http://169.254.170.23/...``
+  (https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+
+- **Any compatible runtime** that implements the same container credential
+  provider protocol
+  (https://docs.aws.amazon.com/sdkref/latest/guide/setting-global-aws_container_credentials_full_uri.html)
 """
 
 import json

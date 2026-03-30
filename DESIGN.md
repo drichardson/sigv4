@@ -204,7 +204,7 @@ credentials independently.
 | 1 | `EnvProvider` | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` |
 | 2 | `WebIdentityProvider` | `AWS_WEB_IDENTITY_TOKEN_FILE` + `AWS_ROLE_ARN` (IRSA) |
 | 3 | `ConfigFileProvider` | `~/.aws/credentials` / `~/.aws/config` (see [AWS config file docs](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)) |
-| 4 | `ContainerProvider` | `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` ([ECS task IAM roles](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)) |
+| 4 | `ContainerProvider` | `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` / `AWS_CONTAINER_CREDENTIALS_FULL_URI` — container credential endpoint ([ECS task IAM roles](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)) |
 | 5 | `IMDSProvider` | EC2 instance metadata at `169.254.169.254` ([IMDSv2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html)) |
 
 ---
