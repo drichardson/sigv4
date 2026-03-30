@@ -7,6 +7,10 @@ Supports IRSA (IAM Roles for Service Accounts on EKS), ECS task roles, EC2 insta
 ## Installation
 
 ```sh
+# uv
+uv add aws-sigv4
+
+# pip
 pip install aws-sigv4
 ```
 
