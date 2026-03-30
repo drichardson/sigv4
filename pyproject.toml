@@ -1,7 +1,7 @@
 [project]
 name = "aws-sigv4"
 version = "0.1.0"
-description = "AWS Signature Version 4 request signing with IRSA credential support. No boto3 required."
+description = "Zero-dependency AWS Signature Version 4 request signing. Supports env vars, IRSA, ECS, EC2, and config file credentials. No boto3 required."
 readme = "README.md"
 license = "MIT"
 authors = [
