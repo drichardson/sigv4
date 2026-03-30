@@ -10,6 +10,21 @@ The goal is to let callers use AWS HTTP APIs directly (via `aiohttp`, `httpx`,
 `requests`, or anything else) while this library handles the authentication
 plumbing.
 
+### Design goals
+
+**Zero Python package dependencies.** The library uses only the Python stdlib
+(`hashlib`, `hmac`, `urllib`, `xml.etree`, `configparser`, `threading`,
+`datetime`). Installing `aws-sigv4` adds nothing to your dependency tree beyond
+itself. This is a deliberate constraint — new runtime dependencies require
+explicit justification and a strong case.
+
+**Correct.** The signing implementation is validated against the official AWS
+SigV4 test suite. See [Conformance Testing](#conformance-testing) below.
+
+**Lightweight.** The signing algorithm itself is pure computation with no I/O.
+Credential fetching (STS, IMDS, ECS) only happens on first use and on refresh,
+not on every request.
+
 IRSA is just one of several supported credential sources. The library works
 equally well with environment variables, `~/.aws/credentials`, ECS task roles,
 EC2 instance profiles, or explicit static credentials passed directly to
