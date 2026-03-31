@@ -40,7 +40,7 @@ from urllib.parse import urlsplit
 # Constants
 # ---------------------------------------------------------------------------
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures" / "aws4_testsuite"
+FIXTURES_DIR = Path(__file__).parent / "data" / "aws4_testsuite"
 
 _CREDS = Credentials(
     access_key="AKIDEXAMPLE",

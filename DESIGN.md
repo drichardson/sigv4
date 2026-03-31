@@ -124,7 +124,7 @@ the [AWS signing documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide
 The signing implementation is validated against the **official AWS SigV4 test
 suite**, vendored from
 [botocore's test fixtures](https://github.com/boto/botocore/tree/develop/tests/unit/auth/aws4_testsuite)
-at `tests/fixtures/aws4_testsuite/`.
+at `tests/data/aws4_testsuite/`.
 
 Each test case provides a raw HTTP request (`.req`) and expected outputs at
 three intermediate stages — canonical request (`.creq`), string to sign

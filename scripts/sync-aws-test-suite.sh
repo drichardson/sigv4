@@ -9,7 +9,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FIXTURES_DIR="${REPO_ROOT}/tests/fixtures/aws4_testsuite"
+FIXTURES_DIR="${REPO_ROOT}/tests/data/aws4_testsuite"
 UPSTREAM_COMMIT_FILE="${FIXTURES_DIR}/.upstream-commit"
 UPSTREAM_REPO="https://github.com/boto/botocore.git"
 UPSTREAM_PATH="tests/unit/auth/aws4_testsuite"
@@ -63,7 +63,7 @@ if [ "${CURRENT_BRANCH}" != "${BRANCH_NAME}" ]; then
     git checkout -b "${BRANCH_NAME}"
 fi
 
-git add tests/fixtures/aws4_testsuite/
+git add tests/data/aws4_testsuite/
 git commit -m "chore: sync AWS SigV4 test suite from botocore
 
 Upstream commit: ${UPSTREAM_SHA}
