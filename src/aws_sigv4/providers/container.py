@@ -90,15 +90,19 @@ def _parse_container_response(data: dict) -> Credentials:
     token = data.get("Token") or data.get("token")
     expiration = data.get("Expiration") or data.get("expiration")
 
-    if not access_key and not secret_key:
-        raise SigV4Error(
-            "Container credentials response missing AccessKeyId and SecretAccessKey"
-        )
-    if not access_key:
-        raise SigV4Error("Container credentials response missing AccessKeyId")
-    if not secret_key:
-        raise SigV4Error("Container credentials response missing SecretAccessKey")
+    match (bool(access_key), bool(secret_key)):
+        case (True, True):
+            pass
+        case (False, True):
+            raise SigV4Error("Container credentials response missing AccessKeyId")
+        case (True, False):
+            raise SigV4Error("Container credentials response missing SecretAccessKey")
+        case _:
+            raise SigV4Error(
+                "Container credentials response missing AccessKeyId and SecretAccessKey"
+            )
 
+    assert access_key is not None and secret_key is not None
     return Credentials(
         access_key=access_key,
         secret_key=secret_key,
