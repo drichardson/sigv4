@@ -90,22 +90,19 @@ def _parse_container_response(data: dict) -> Credentials:
     token = data.get("Token") or data.get("token")
     expiration = data.get("Expiration") or data.get("expiration")
 
-    match (bool(access_key), bool(secret_key)):
-        case (True, True):
-            pass
-        case (False, True):
-            raise SigV4Error("Container credentials response missing AccessKeyId")
-        case (True, False):
+    match (access_key, secret_key):
+        case (str(ak), str(sk)) if ak and sk:
+            return Credentials(
+                access_key=ak,
+                secret_key=sk,
+                token=token or None,
+                expires_at=parse_utc_datetime(expiration) if expiration else None,
+            )
+        case (None | "", str()) | (str(), None | ""):
+            if not access_key:
+                raise SigV4Error("Container credentials response missing AccessKeyId")
             raise SigV4Error("Container credentials response missing SecretAccessKey")
         case _:
             raise SigV4Error(
                 "Container credentials response missing AccessKeyId and SecretAccessKey"
             )
-
-    assert access_key is not None and secret_key is not None
-    return Credentials(
-        access_key=access_key,
-        secret_key=secret_key,
-        token=token or None,
-        expires_at=parse_utc_datetime(expiration) if expiration else None,
-    )
