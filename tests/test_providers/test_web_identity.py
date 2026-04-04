@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from aws_sigv4.credentials import SigV4Error
 from aws_sigv4.providers.web_identity import WebIdentityProvider, _parse_sts_response
 
 
@@ -93,7 +94,7 @@ def test_sts_xml_missing_field_raises(tmp_path):
   </AssumeRoleWithWebIdentityResult>
 </AssumeRoleWithWebIdentityResponse>
 """
-    with pytest.raises(RuntimeError, match="could not find"):
+    with pytest.raises(SigV4Error, match="missing required field"):
         _parse_sts_response(xml)
 
 
@@ -145,7 +146,7 @@ def test_token_file_not_found_raises(monkeypatch):
     monkeypatch.setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/nonexistent/token")
     monkeypatch.setenv("AWS_ROLE_ARN", _ROLE_ARN)
 
-    with pytest.raises(RuntimeError, match="Failed to read web identity token file"):
+    with pytest.raises(SigV4Error, match="Failed to read web identity token file"):
         WebIdentityProvider().try_load()
 
 
@@ -183,7 +184,9 @@ def test_sts_403_raises(httpserver, tmp_path):
     httpserver.expect_request("/", method="POST").respond_with_data(
         _STS_ERROR_RESPONSE, status=403, content_type="text/xml"
     )
-    with pytest.raises(RuntimeError, match="403"):
+    with pytest.raises(
+        SigV4Error, match="STS AssumeRoleWithWebIdentity request failed"
+    ):
         _make_provider(httpserver, tmp_path).try_load()
 
 

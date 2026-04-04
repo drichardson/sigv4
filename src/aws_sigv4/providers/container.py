@@ -22,13 +22,12 @@ via environment variable. This mechanism is used by:
 """
 
 import json
-import logging
 import os
 import urllib.error
 import urllib.request
-from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
-logger = logging.getLogger(__name__)
+from aws_sigv4._log import warning
+from aws_sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
 
 # ECS link-local metadata host for relative URI credentials.
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
@@ -56,10 +55,9 @@ def try_load_from_container() -> Credentials | None:
             full_uri.startswith(p)
             for p in (_ECS_METADATA_HOST, "http://127.0.0.1", "https://")
         ):
-            logger.warning(
-                "AWS_CONTAINER_CREDENTIALS_FULL_URI %r is not an allowed "
-                "prefix; skipping container credential provider.",
-                full_uri,
+            warning(
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI must start with "
+                "https:// or http://169.254.170.2"
             )
             return None
         url = full_uri
@@ -75,10 +73,8 @@ def try_load_from_container() -> Credentials | None:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
-    except (urllib.error.URLError, json.JSONDecodeError, OSError) as e:
-        raise RuntimeError(
-            f"Failed to fetch container credentials from {url!r}: {e}"
-        ) from e
+    except urllib.error.URLError, json.JSONDecodeError, OSError:
+        raise SigV4Error("Failed to fetch container credentials")
 
     return _parse_container_response(data)
 
@@ -90,13 +86,7 @@ def _parse_container_response(data: dict) -> Credentials:
     expiration = data.get("Expiration") or data.get("expiration")
 
     if not access_key or not secret_key:
-        # Do not include the response body in the message — it may contain
-        # a session token or other credential material.
-        keys = list(data.keys())
-        raise RuntimeError(
-            f"Container credentials response missing AccessKeyId/SecretAccessKey. "
-            f"Keys present: {keys}"
-        )
+        raise SigV4Error("Container credentials response missing required fields")
 
     return Credentials(
         access_key=access_key,

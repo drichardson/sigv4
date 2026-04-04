@@ -10,6 +10,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from aws_sigv4.credentials import (
+    SigV4Error,
     Credentials,
     CredentialsExpiredError,
     RefreshableCredentials,
@@ -301,3 +302,45 @@ def test_parse_utc_datetime_naive_gets_utc():
     dt = parse_utc_datetime("2099-01-01T00:00:00")
     assert dt.tzinfo is not None
     assert dt.tzinfo == UTC
+
+
+# ---------------------------------------------------------------------------
+# Credentials redaction
+# ---------------------------------------------------------------------------
+
+
+def test_credentials_repr_does_not_leak_secret_key():
+    """repr(Credentials) must never contain the secret key value."""
+    creds = Credentials(access_key="AKID", secret_key="supersecret", token="mytoken")
+    assert "supersecret" not in repr(creds)
+    assert "mytoken" not in repr(creds)
+
+
+def test_credentials_str_does_not_leak_secret_key():
+    """str(Credentials) must never contain the secret key value."""
+    creds = Credentials(access_key="AKID", secret_key="supersecret", token="mytoken")
+    assert "supersecret" not in str(creds)
+    assert "mytoken" not in str(creds)
+
+
+def test_credentials_repr_is_fully_redacted():
+    """repr(Credentials) must show redacted placeholders, not real values."""
+    creds = Credentials(access_key="AKID", secret_key="supersecret")
+    r = repr(creds)
+    assert "***" in r
+
+
+# ---------------------------------------------------------------------------
+# SigV4Error
+# ---------------------------------------------------------------------------
+
+
+def test_credentials_expired_error_is_awsv4sig_error():
+    """CredentialsExpiredError must be a subclass of SigV4Error."""
+    assert issubclass(CredentialsExpiredError, SigV4Error)
+
+
+def test_awsv4sig_error_message_preserved():
+    """SigV4Error must preserve the literal message."""
+    e = SigV4Error("something went wrong")
+    assert str(e) == "something went wrong"

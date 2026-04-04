@@ -22,13 +22,17 @@ tasks:
     desc: Enforce zero Python package runtime dependencies
     cmd: scripts/check-no-runtime-deps.sh
 
+  check-security:
+    desc: "AST-based check for credential leak prevention (no print, no logging outside _log.py, literal-only exception messages, no type: ignore)"
+    cmd: uv run python scripts/check-no-credential-leaks.py
+
   check:
-    desc: Run all checks (test, lint, typecheck, check-deps)
-    deps: [test, lint, typecheck, check-deps]
+    desc: Run all checks (test, lint, typecheck, check-deps, check-security)
+    deps: [test, lint, typecheck, check-deps, check-security]
 
   git-hook:
     desc: Run by git hooks — update this task to change hook behaviour without reinstalling
-    deps: [test, lint, typecheck]
+    deps: [test, lint, typecheck, check-security]
 
   install-git-hooks:
     desc: Install git hooks (pre-push). Only needs to be run once after cloning.

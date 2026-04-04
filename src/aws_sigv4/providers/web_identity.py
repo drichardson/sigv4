@@ -15,16 +15,14 @@ Reference:
   https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 """
 
-import logging
 import os
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
-from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
-logger = logging.getLogger(__name__)
+from aws_sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
 
 _STS_ENDPOINT = "https://sts.amazonaws.com/"
 _STS_NS = "https://sts.amazonaws.com/doc/2011-06-15/"
@@ -77,10 +75,8 @@ class WebIdentityProvider:
         try:
             with open(token_file) as f:
                 web_identity_token = f.read().strip()
-        except OSError as e:
-            raise RuntimeError(
-                f"Failed to read web identity token file {token_file!r}: {e}"
-            ) from e
+        except OSError:
+            raise SigV4Error("Failed to read web identity token file")
 
         session_name = (
             self._role_session_name
@@ -134,11 +130,8 @@ def _assume_role_with_web_identity(
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             xml_bytes = resp.read()
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode(errors="replace")
-        raise RuntimeError(
-            f"STS AssumeRoleWithWebIdentity failed ({e.code}): {error_body}"
-        ) from e
+    except urllib.error.HTTPError:
+        raise SigV4Error("STS AssumeRoleWithWebIdentity request failed")
 
     return _parse_sts_response(xml_bytes)
 
@@ -159,10 +152,7 @@ def _parse_sts_response(xml_bytes: bytes) -> Credentials:
         node = root.find(bare_path)
         if node is not None and node.text is not None:
             return node.text
-        raise RuntimeError(
-            f"Unexpected STS response — could not find {path!r} in:\n"
-            + ET.tostring(root, encoding="unicode")
-        )
+        raise SigV4Error("Unexpected STS response: missing required field")
 
     # XPath relative to document root (AssumeRoleWithWebIdentityResponse).
     access_key = find(

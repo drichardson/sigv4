@@ -6,12 +6,12 @@
 Key invariants:
 - Provider returns None → chain moves to the next provider
 - Provider raises → exception propagates to the caller (chain does not swallow it)
-- All providers return None → RuntimeError with a helpful message
+- All providers return None → SigV4Error with a helpful message
 """
 
 import pytest
 
-from aws_sigv4.credentials import Credentials
+from aws_sigv4.credentials import SigV4Error, Credentials
 from aws_sigv4.resolve import resolve_credentials
 
 
@@ -47,7 +47,7 @@ def test_chain_skips_none_providers():
 def test_chain_raises_when_all_providers_return_none():
     """If every provider returns None a RuntimeError is raised."""
     rc = resolve_credentials(providers=[lambda: None, lambda: None])
-    with pytest.raises(RuntimeError, match="No AWS credentials found"):
+    with pytest.raises(SigV4Error, match="No AWS credentials found"):
         rc.get()
 
 
@@ -67,14 +67,14 @@ def test_chain_does_not_continue_after_exception():
     called = []
 
     def broken():
-        raise RuntimeError("broken")
+        raise SigV4Error("broken provider")
 
     def should_not_be_called():
         called.append(True)
         return _CREDS
 
     rc = resolve_credentials(providers=[broken, should_not_be_called])
-    with pytest.raises(RuntimeError):
+    with pytest.raises(SigV4Error):
         rc.get()
 
     assert called == [], "provider after a raising provider must not be called"

@@ -28,6 +28,7 @@ High-level (credential resolution + auto-refresh + signing)::
 """
 
 from aws_sigv4.credentials import (
+    SigV4Error,
     CredentialProvider,
     Credentials,
     CredentialsExpiredError,
@@ -38,6 +39,7 @@ from aws_sigv4.signing import sign_headers
 from aws_sigv4.signer import Signer
 
 __all__ = [
+    "SigV4Error",
     "CredentialProvider",
     "Credentials",
     "CredentialsExpiredError",

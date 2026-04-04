@@ -248,6 +248,56 @@ expire and before Kubernetes rotates the token file.
 
 ---
 
+## Security
+
+This library handles AWS credentials. Any code path that could emit credential
+material — through logging, print statements, exception messages, or string
+representations — is a security defect.
+
+**Principle:** if it cannot be determined from a cursory analysis of the source
+that no credentials are leaked, the construct is banned.
+
+The following rules are enforced by `scripts/check-no-credential-leaks.py`, an
+AST-based CI check that cannot be suppressed by `# noqa` or `# type: ignore`:
+
+1. **`print()` is banned.** No `print()` calls anywhere in library source.
+
+2. **Exception messages must be string literals.** No f-strings, `.format()`,
+   string concatenation, or variable references in exception constructors. A
+   user-provided URL, for example, could contain a credential embedded in the
+   query string — echoing it back in an exception leaks it. Messages should
+   tell the user what to check, not repeat what they provided.
+
+3. **`raise ... from <exception>` is banned** (except `from None`). Chained
+   exceptions can contain credential data in their `__str__` — e.g.,
+   `json.JSONDecodeError` includes a snippet of the decoded input,
+   `urllib.error.HTTPError` can include the response body. Use `from None`
+   or omit the cause entirely.
+
+4. **Only `AWSv4SigError` and its subclasses may be raised.** `RuntimeError`
+   and other built-in exceptions are banned. `AWSv4SigError.__init__` accepts
+   only a `LiteralString`, enforced by mypy at type-check time.
+
+5. **Logging is restricted to a single internal module** (`_log.py`). No other
+   module may import `logging` or call `logging.*` / `logger.*` directly. The
+   public API is `aws_sigv4._log.warning(message: LiteralString)` — only
+   `warning` level is exposed, and only string literals are accepted. This
+   prevents variable data (which could contain credentials) from ever being
+   logged. An environment variable value, for instance, could be a URL with a
+   credential in it — the warning message should describe the problem in
+   general terms, not echo the value back.
+
+6. **`Credentials.__repr__` and `__str__` are fully redacted.** Even if a
+   `Credentials` object is accidentally passed to a log or exception, no
+   secret material is visible.
+
+7. **`# type: ignore` is banned from all source files under `src/`.** This
+   prevents suppressing the `LiteralString` constraint on `AWSv4SigError` and
+   `warning()`, and prevents bypassing any other mypy check. If mypy reports
+   an error, fix the code.
+
+---
+
 ## References
 
 - [AWS Signature Version 4 — Create a signed request](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html)

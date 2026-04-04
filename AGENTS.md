@@ -37,11 +37,22 @@ that runs ``task git-hook``. To change what the hook does, update the
   mutations to `_credentials` must be inside the lock.
 - **SPDX headers** — all source files start with the SPDX copyright and
   license identifier comments.
-- **No credential leakage** — never include sensitive values (tokens, secret
-  keys, passwords, full HTTP response bodies from credential endpoints) in log
-  messages, exception messages, or ``__repr__``/``__str__`` output. When an
-  error message needs context, include only safe metadata (e.g. key names,
-  URLs, HTTP status codes) — never values.
+- **No credential leakage** — see the Security section in ``DESIGN.md`` for
+  the full rationale. The hard rules, all enforced by
+  ``scripts/check-no-credential-leaks.py`` in CI (cannot be suppressed):
+
+  - No ``print()`` anywhere in ``src/``
+  - Raise only ``AWSv4SigError`` or its subclasses
+  - Exception messages must be string literals only — no f-strings, no
+    ``.format()``, no variable references, no concatenation
+  - No ``raise ... from <exception>`` (use ``from None`` or omit the cause)
+  - No ``import logging`` outside ``_log.py`` — use ``from aws_sigv4._log
+    import warning`` and call ``warning("static message")`` only
+  - ``warning()`` accepts only ``LiteralString`` — no variables, ever
+  - No ``# type: ignore`` anywhere in ``src/``
+
+- **No type suppressions** — ``# type: ignore`` is banned from all source
+  files. If mypy reports an error, fix the code.
 - **Docstrings** — use reStructuredText (RST) markup, which is the Python
   standard. Inline code uses double backticks: ````~/.aws/credentials````.
   Single backticks in RST mean a cross-reference, not inline code.

@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+from aws_sigv4.credentials import SigV4Error
 from aws_sigv4.providers.container import try_load_from_container
 
 _VALID_CREDS = {
@@ -89,7 +90,7 @@ def test_full_uri_https_allowed(httpserver, monkeypatch):
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", "https://localhost:9999/creds"
     )
     # Should raise (connection error to non-existent server), not return None.
-    with pytest.raises(RuntimeError):
+    with pytest.raises(SigV4Error):
         try_load_from_container()
 
 
@@ -131,7 +132,7 @@ def test_raises_when_server_returns_500(httpserver, monkeypatch):
     monkeypatch.setenv(
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(SigV4Error):
         try_load_from_container()
 
 
@@ -142,7 +143,7 @@ def test_raises_when_response_missing_keys(httpserver, monkeypatch):
     monkeypatch.setenv(
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
     )
-    with pytest.raises(RuntimeError, match="AccessKeyId"):
+    with pytest.raises(SigV4Error, match="missing required fields"):
         try_load_from_container()
 
 
@@ -155,7 +156,7 @@ def test_raises_when_response_not_json(httpserver, monkeypatch):
     monkeypatch.setenv(
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(SigV4Error):
         try_load_from_container()
 
 

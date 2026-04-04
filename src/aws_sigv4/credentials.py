@@ -5,19 +5,36 @@
 Credential types and the refreshable credential wrapper.
 """
 
-import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import LiteralString
 
-logger = logging.getLogger(__name__)
+from aws_sigv4._log import warning
 
 # How far before expiry to attempt an advisory (non-blocking) refresh.
 _ADVISORY_REFRESH_SECONDS = 15 * 60  # 15 minutes
 
 # How far before expiry to force a mandatory (blocking) refresh.
 _MANDATORY_REFRESH_SECONDS = 10 * 60  # 10 minutes
+
+
+class SigV4Error(Exception):
+    """Base exception for all aws-sigv4 errors.
+
+    Only accepts ``LiteralString`` arguments so that mypy enforces at
+    type-check time that no variable data (which could contain credentials)
+    is ever included in an exception message.
+    """
+
+    def __init__(self, message: LiteralString) -> None:
+        super().__init__(message)
+
+
+class CredentialsExpiredError(SigV4Error):
+    """Raised by :class:`RefreshableCredentials` when credentials have expired
+    and the provider fails to return new ones."""
 
 
 @dataclass(frozen=True)
@@ -28,6 +45,9 @@ class Credentials:
     For temporary credentials (STS, IRSA, ECS, IMDS), ``token`` and
     ``expires_at`` will be set. For long-lived IAM user credentials they
     will be ``None``.
+
+    ``__repr__`` and ``__str__`` are fully redacted — no credential values
+    are ever included in string representations.
     """
 
     access_key: str
@@ -35,17 +55,18 @@ class Credentials:
     token: str | None = None
     expires_at: datetime | None = None  # timezone-aware UTC
 
+    def __repr__(self) -> str:
+        return "Credentials(access_key='***', secret_key='***', token='***')"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 type CredentialProvider = Callable[[], Credentials | None]
 """
 A callable that returns :class:`Credentials` or ``None`` if credentials are
 not available in the current environment (e.g. env vars not set).
 """
-
-
-class CredentialsExpiredError(Exception):
-    """Raised by :class:`RefreshableCredentials` when credentials have expired
-    and no auto-refresh is configured."""
 
 
 class RefreshableCredentials:
@@ -115,7 +136,7 @@ class RefreshableCredentials:
         - If not yet fetched: blocks and fetches.
         - If in mandatory refresh window: blocks until refreshed.
         - If in advisory window: attempts refresh; if it fails, returns the
-          still-valid cached credentials (warning is logged).
+          still-valid cached credentials (warning is emitted).
         - Otherwise: returns cached credentials instantly.
 
         Raises:
@@ -127,7 +148,9 @@ class RefreshableCredentials:
         if creds is None:
             # First fetch — always block.
             self._do_refresh()
-            return self._credentials  # type: ignore[return-value]
+            # _do_refresh() raises if it cannot set credentials.
+            assert self._credentials is not None
+            return self._credentials
 
         if creds.expires_at is None:
             # Long-lived credentials — never expire.
@@ -138,26 +161,23 @@ class RefreshableCredentials:
         if remaining <= 0:
             # Hard expired — must refresh and propagate any error.
             self._do_refresh()
-            return self._credentials  # type: ignore[return-value]
+            assert self._credentials is not None
+            return self._credentials
 
         if remaining < _MANDATORY_REFRESH_SECONDS:
             # Mandatory window — block all callers.
             self._do_refresh()
-            return self._credentials  # type: ignore[return-value]
+            assert self._credentials is not None
+            return self._credentials
 
         if remaining < _ADVISORY_REFRESH_SECONDS:
             # Advisory window — try to refresh; swallow errors and use cached.
             try:
                 self._do_refresh()
             except Exception:
-                logger.warning(
-                    "Advisory credential refresh failed; using cached credentials "
-                    "(expires in %.0f seconds).",
-                    remaining,
-                    exc_info=True,
-                )
+                warning("Advisory credential refresh failed; using cached credentials")
 
-        return self._credentials or creds  # type: ignore[return-value]
+        return self._credentials if self._credentials is not None else creds
 
     # ------------------------------------------------------------------
     # Internal

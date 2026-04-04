@@ -5,16 +5,16 @@
 Credential chain resolution.
 """
 
-import logging
-
-from aws_sigv4.credentials import CredentialProvider, RefreshableCredentials
-from aws_sigv4.providers.env import try_load_from_env
-from aws_sigv4.providers.web_identity import WebIdentityProvider
+from aws_sigv4.credentials import (
+    SigV4Error,
+    CredentialProvider,
+    RefreshableCredentials,
+)
 from aws_sigv4.providers.config_file import try_load_from_config_file
 from aws_sigv4.providers.container import try_load_from_container
+from aws_sigv4.providers.env import try_load_from_env
 from aws_sigv4.providers.imds import try_load_from_imds
-
-logger = logging.getLogger(__name__)
+from aws_sigv4.providers.web_identity import WebIdentityProvider
 
 
 def resolve_credentials(
@@ -48,7 +48,7 @@ def resolve_credentials(
         wrapping the first matching provider.
 
     Raises:
-        RuntimeError: If no provider in the chain can supply credentials.
+        SigV4Error: If no provider in the chain can supply credentials.
     """
     if providers is None:
         providers = [
@@ -73,11 +73,5 @@ class _ChainProvider:
         for provider in self._providers:
             creds = provider()
             if creds is not None:
-                logger.debug("Credentials resolved via %s.", provider.__name__)
                 return creds
-        raise RuntimeError(
-            "No AWS credentials found. Tried: "
-            + ", ".join(p.__name__ for p in self._providers)
-            + ". Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or configure "
-            "an IAM role via IRSA, ECS task role, or EC2 instance profile."
-        )
+        raise SigV4Error("No AWS credentials found")

@@ -22,6 +22,7 @@ import urllib.error
 
 import pytest
 
+from aws_sigv4.credentials import SigV4Error
 from aws_sigv4.providers.imds import _is_not_present, try_load_from_imds
 
 # ---------------------------------------------------------------------------
@@ -141,7 +142,7 @@ def test_raises_when_credentials_response_missing_keys(httpserver):
         f"/latest/meta-data/iam/security-credentials/{_ROLE_NAME}"
     ).respond_with_json({"Code": "Success"})
 
-    with pytest.raises(RuntimeError, match="AccessKeyId"):
+    with pytest.raises(SigV4Error, match="missing required fields"):
         try_load_from_imds()
 
 
@@ -157,7 +158,7 @@ def test_raises_when_credentials_code_not_success(httpserver):
         f"/latest/meta-data/iam/security-credentials/{_ROLE_NAME}"
     ).respond_with_json({"Code": "Failed"})
 
-    with pytest.raises(RuntimeError, match="non-success code"):
+    with pytest.raises(SigV4Error, match="non-success"):
         try_load_from_imds()
 
 

@@ -72,6 +72,9 @@ jobs:
     - name: Check no runtime dependencies
       run: task check-deps
 
+    - name: Check no credential leaks
+      run: task check-security
+
   check:
     if: always()
 

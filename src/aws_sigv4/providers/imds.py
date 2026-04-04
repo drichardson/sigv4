@@ -21,12 +21,10 @@ Reference:
 
 import errno
 import json
-import logging
 import urllib.error
 import urllib.request
-from aws_sigv4.credentials import Credentials, parse_utc_datetime
 
-logger = logging.getLogger(__name__)
+from aws_sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
 
 _IMDS_BASE = "http://169.254.169.254/latest"
 # Maximum allowed TTL for an IMDSv2 session token. Using the maximum to
@@ -53,8 +51,7 @@ def try_load_from_imds() -> Credentials | None:
 
     try:
         role_name = _get_role_name(imds_token)
-    except urllib.error.URLError as e:
-        logger.debug("IMDS: no IAM role attached to this instance: %s", e)
+    except urllib.error.URLError:
         return None
 
     return _get_role_credentials(imds_token, role_name)
@@ -113,16 +110,12 @@ def _get_role_credentials(imds_token: str, role_name: str) -> Credentials:
         data = json.loads(resp.read())
 
     if data.get("Code") != "Success":
-        raise RuntimeError(f"IMDS returned non-success code for role {role_name!r}")
+        raise SigV4Error("IMDS returned non-success credentials response")
 
     access_key = data.get("AccessKeyId")
     secret_key = data.get("SecretAccessKey")
     if not access_key or not secret_key:
-        keys = list(data.keys())
-        raise RuntimeError(
-            f"IMDS credentials response missing AccessKeyId/SecretAccessKey. "
-            f"Keys present: {keys}"
-        )
+        raise SigV4Error("IMDS credentials response missing required fields")
 
     expiration = data.get("Expiration", "")
 
