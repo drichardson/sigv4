@@ -72,9 +72,14 @@ def try_load_from_container() -> Credentials | None:
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read())
-    except urllib.error.URLError, json.JSONDecodeError, OSError:
-        raise SigV4Error("Failed to fetch container credentials")
+            raw = resp.read()
+    except urllib.error.URLError:
+        raise SigV4Error("Failed to connect to container credentials endpoint")
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        raise SigV4Error("Container credentials endpoint returned invalid JSON")
 
     return _parse_container_response(data)
 
@@ -85,8 +90,14 @@ def _parse_container_response(data: dict) -> Credentials:
     token = data.get("Token") or data.get("token")
     expiration = data.get("Expiration") or data.get("expiration")
 
-    if not access_key or not secret_key:
-        raise SigV4Error("Container credentials response missing required fields")
+    if not access_key and not secret_key:
+        raise SigV4Error(
+            "Container credentials response missing AccessKeyId and SecretAccessKey"
+        )
+    if not access_key:
+        raise SigV4Error("Container credentials response missing AccessKeyId")
+    if not secret_key:
+        raise SigV4Error("Container credentials response missing SecretAccessKey")
 
     return Credentials(
         access_key=access_key,

@@ -136,19 +136,41 @@ def test_raises_when_server_returns_500(httpserver, monkeypatch):
         try_load_from_container()
 
 
-def test_raises_when_response_missing_keys(httpserver, monkeypatch):
-    """Server returns JSON missing AccessKeyId -- should raise."""
+def test_raises_when_both_keys_missing(httpserver, monkeypatch):
+    """Response missing both AccessKeyId and SecretAccessKey."""
     httpserver.expect_request("/creds").respond_with_json({"Token": "tok"})
     monkeypatch.delenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", raising=False)
     monkeypatch.setenv(
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
     )
-    with pytest.raises(SigV4Error, match="missing required fields"):
+    with pytest.raises(SigV4Error, match="missing AccessKeyId and SecretAccessKey"):
+        try_load_from_container()
+
+
+def test_raises_when_only_access_key_missing(httpserver, monkeypatch):
+    """Response missing AccessKeyId but has SecretAccessKey."""
+    httpserver.expect_request("/creds").respond_with_json({"SecretAccessKey": "secret"})
+    monkeypatch.delenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", raising=False)
+    monkeypatch.setenv(
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
+    )
+    with pytest.raises(SigV4Error, match="missing AccessKeyId"):
+        try_load_from_container()
+
+
+def test_raises_when_only_secret_key_missing(httpserver, monkeypatch):
+    """Response missing SecretAccessKey but has AccessKeyId."""
+    httpserver.expect_request("/creds").respond_with_json({"AccessKeyId": "AKID"})
+    monkeypatch.delenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", raising=False)
+    monkeypatch.setenv(
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
+    )
+    with pytest.raises(SigV4Error, match="missing SecretAccessKey"):
         try_load_from_container()
 
 
 def test_raises_when_response_not_json(httpserver, monkeypatch):
-    """Server returns non-JSON -- should raise."""
+    """Server returns non-JSON -- should raise with JSON-specific message."""
     httpserver.expect_request("/creds").respond_with_data(
         "not json", content_type="text/plain"
     )
@@ -156,7 +178,23 @@ def test_raises_when_response_not_json(httpserver, monkeypatch):
     monkeypatch.setenv(
         "AWS_CONTAINER_CREDENTIALS_FULL_URI", httpserver.url_for("/creds")
     )
-    with pytest.raises(SigV4Error):
+    with pytest.raises(SigV4Error, match="invalid JSON"):
+        try_load_from_container()
+
+
+def test_raises_on_connection_error(monkeypatch):
+    """Connection failure -- should raise with URL-specific message."""
+    import socket
+
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+
+    monkeypatch.delenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", raising=False)
+    monkeypatch.setenv(
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI", f"http://127.0.0.1:{port}/creds"
+    )
+    with pytest.raises(SigV4Error, match="connect"):
         try_load_from_container()
 
 
