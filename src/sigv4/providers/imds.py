@@ -24,7 +24,7 @@ import json
 import urllib.error
 import urllib.request
 
-from aws_sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
+from sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
 
 _IMDS_BASE = "http://169.254.169.254/latest"
 # Maximum allowed TTL for an IMDSv2 session token. Using the maximum to

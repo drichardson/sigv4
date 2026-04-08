@@ -5,16 +5,16 @@
 Credential chain resolution.
 """
 
-from aws_sigv4.credentials import (
+from sigv4.credentials import (
     SigV4Error,
     CredentialProvider,
     RefreshableCredentials,
 )
-from aws_sigv4.providers.config_file import try_load_from_config_file
-from aws_sigv4.providers.container import try_load_from_container
-from aws_sigv4.providers.env import try_load_from_env
-from aws_sigv4.providers.imds import try_load_from_imds
-from aws_sigv4.providers.web_identity import WebIdentityProvider
+from sigv4.providers.config_file import try_load_from_config_file
+from sigv4.providers.container import try_load_from_container
+from sigv4.providers.env import try_load_from_env
+from sigv4.providers.imds import try_load_from_imds
+from sigv4.providers.web_identity import WebIdentityProvider
 
 # Default provider chain — constructed once at module load time.
 # Each provider function re-reads env vars and files on every call, so
@@ -35,7 +35,7 @@ def resolve_credentials(
     Resolve AWS credentials from the standard provider chain.
 
     The chain is tried in order; the first provider that returns credentials
-    wins. Returns a :class:`~aws_sigv4.credentials.RefreshableCredentials`
+    wins.     Returns a :class:`~sigv4.credentials.RefreshableCredentials`
     that will automatically refresh before expiry.
 
     Default provider order:
@@ -55,7 +55,7 @@ def resolve_credentials(
             credential chains.
 
     Returns:
-        A :class:`~aws_sigv4.credentials.RefreshableCredentials` instance
+        A :class:`~sigv4.credentials.RefreshableCredentials` instance
         wrapping the first matching provider.
 
     Raises:

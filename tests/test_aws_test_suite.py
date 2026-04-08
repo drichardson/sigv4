@@ -28,8 +28,8 @@ from pathlib import Path
 
 import pytest
 
-from aws_sigv4.credentials import Credentials
-from aws_sigv4.signing import (
+from sigv4.credentials import Credentials
+from sigv4.signing import (
     _canonical_request,
     _string_to_sign,
     sign_headers,

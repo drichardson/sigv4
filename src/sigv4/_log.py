@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Internal logging — the only module in ``aws_sigv4`` permitted to call the
+Internal logging — the only module in ``sigv4`` permitted to call the
 stdlib ``logging`` API.
 
 All log output from this library goes through :func:`warning`. The function
@@ -11,7 +11,7 @@ type-check time that no variable data (which could contain credentials) is
 ever logged. The AST-based security check
 (``scripts/check-no-credential-leaks.py``) additionally verifies that:
 
-- No other module under ``src/aws_sigv4/`` imports ``logging``
+- No other module under ``src/sigv4/`` imports ``logging``
 - No other module calls ``logging.*`` or ``logger.*`` directly
 - Every call to :func:`warning` passes a string literal
 - No ``# type: ignore`` comment suppresses the ``LiteralString`` constraint
@@ -24,7 +24,7 @@ contain credential material.
 import logging
 from typing import LiteralString
 
-_logger = logging.getLogger("aws_sigv4")
+_logger = logging.getLogger("sigv4")
 
 
 def warning(message: LiteralString) -> None:

@@ -27,7 +27,7 @@ EOF
 if [ -n "${DEPS}" ]; then
     echo "ERROR: Runtime dependencies found in pyproject.toml."
     echo ""
-    echo "aws-sigv4 must have zero Python package dependencies (stdlib only)."
+    echo "sigv4 must have zero Python package dependencies (stdlib only)."
     echo "See DESIGN.md for the rationale."
     echo ""
     echo "Offending entries:"

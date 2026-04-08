@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from aws_sigv4.credentials import (
+from sigv4.credentials import (
     SigV4Error,
     Credentials,
     CredentialsExpiredError,

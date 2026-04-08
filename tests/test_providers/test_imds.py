@@ -22,8 +22,8 @@ import urllib.error
 
 import pytest
 
-from aws_sigv4.credentials import SigV4Error
-from aws_sigv4.providers.imds import _is_not_present, try_load_from_imds
+from sigv4.credentials import SigV4Error
+from sigv4.providers.imds import _is_not_present, try_load_from_imds
 
 # ---------------------------------------------------------------------------
 # Valid IMDS response bodies
@@ -97,10 +97,10 @@ def _register_imds(httpserver, role_name=_ROLE_NAME, creds=None):
 def _point_imds_at_httpserver(httpserver, monkeypatch):
     """Point the IMDS provider at the local httpserver for every test in this module."""
     monkeypatch.setattr(
-        "aws_sigv4.providers.imds._IMDS_BASE",
+        "sigv4.providers.imds._IMDS_BASE",
         httpserver.url_for("/latest"),
     )
-    monkeypatch.setattr("aws_sigv4.providers.imds._CONNECT_TIMEOUT", 2)
+    monkeypatch.setattr("sigv4.providers.imds._CONNECT_TIMEOUT", 2)
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ def test_raises_when_token_request_times_out(httpserver):
     timeout_err.reason = OSError(errno.ETIMEDOUT, "timed out")
     timeout_err.reason.errno = errno.ETIMEDOUT
 
-    with patch("aws_sigv4.providers.imds._get_imds_token", side_effect=timeout_err):
+    with patch("sigv4.providers.imds._get_imds_token", side_effect=timeout_err):
         with pytest.raises(urllib.error.URLError):
             try_load_from_imds()
 
@@ -188,7 +188,7 @@ def test_returns_none_when_connection_refused(monkeypatch):
         port = s.getsockname()[1]
     # Socket released; nothing is listening on that port now.
     monkeypatch.setattr(
-        "aws_sigv4.providers.imds._IMDS_BASE",
+        "sigv4.providers.imds._IMDS_BASE",
         f"http://127.0.0.1:{port}/latest",
     )
     assert try_load_from_imds() is None

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import LiteralString
 
-from aws_sigv4._log import warning
+from sigv4._log import warning
 
 # How far before expiry to attempt an advisory (non-blocking) refresh.
 _ADVISORY_REFRESH_SECONDS = 15 * 60  # 15 minutes
@@ -21,7 +21,7 @@ _MANDATORY_REFRESH_SECONDS = 10 * 60  # 10 minutes
 
 
 class SigV4Error(Exception):
-    """Base exception for all aws-sigv4 errors.
+    """Base exception for all sigv4 errors.
 
     Only accepts ``LiteralString`` arguments so that mypy enforces at
     type-check time that no variable data (which could contain credentials)

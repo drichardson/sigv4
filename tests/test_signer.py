@@ -6,7 +6,7 @@
 from datetime import UTC, datetime
 
 
-from aws_sigv4 import Credentials, RefreshableCredentials, Signer
+from sigv4 import Credentials, RefreshableCredentials, Signer
 
 
 def _static_refreshable(creds: Credentials) -> RefreshableCredentials:

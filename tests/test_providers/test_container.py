@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from aws_sigv4.credentials import SigV4Error
-from aws_sigv4.providers.container import try_load_from_container
+from sigv4.credentials import SigV4Error
+from sigv4.providers.container import try_load_from_container
 
 _VALID_CREDS = {
     "AccessKeyId": "CONTAINER_AKID",
@@ -40,7 +40,7 @@ def test_relative_uri_returns_credentials(httpserver, monkeypatch):
     httpserver.expect_request("/creds").respond_with_json(_VALID_CREDS)
 
     monkeypatch.setattr(
-        "aws_sigv4.providers.container._ECS_METADATA_HOST",
+        "sigv4.providers.container._ECS_METADATA_HOST",
         httpserver.url_for("/").rstrip("/"),
     )
     monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/creds")

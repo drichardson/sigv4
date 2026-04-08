@@ -13,7 +13,7 @@ import re
 from datetime import UTC, datetime
 from urllib.parse import quote, urlsplit, parse_qsl
 
-from aws_sigv4.credentials import Credentials
+from sigv4.credentials import Credentials
 
 # Headers excluded from the signature.
 #
@@ -80,7 +80,7 @@ def sign_headers(
         region: AWS region name, e.g. ``"us-east-1"``.
         service: AWS service name, e.g. ``"s3"`` or ``"execute-api"``.
         credentials: Static credentials (access_key, secret_key, optional token).
-            Use :func:`aws_sigv4.resolve_credentials` to obtain these.
+            Use :func:`sigv4.resolve_credentials` to obtain these.
         timestamp: Override the signing timestamp. Defaults to UTC now. Useful
             for testing with known-good test vectors.
 

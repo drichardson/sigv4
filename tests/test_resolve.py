@@ -11,8 +11,8 @@ Key invariants:
 
 import pytest
 
-from aws_sigv4.credentials import SigV4Error, Credentials
-from aws_sigv4.resolve import resolve_credentials
+from sigv4.credentials import SigV4Error, Credentials
+from sigv4.resolve import resolve_credentials
 
 
 _CREDS = Credentials(access_key="AKID", secret_key="secret")
