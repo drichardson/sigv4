@@ -42,11 +42,11 @@ that runs ``task git-hook``. To change what the hook does, update the
   ``scripts/check-no-credential-leaks.py`` in CI (cannot be suppressed):
 
   - No ``print()`` anywhere in ``src/``
-  - Raise only ``AWSv4SigError`` or its subclasses
+  - Raise only ``SigV4Error`` or its subclasses
   - Exception messages must be string literals only — no f-strings, no
     ``.format()``, no variable references, no concatenation
   - No ``raise ... from <exception>`` (use ``from None`` or omit the cause)
-  - No ``import logging`` outside ``_log.py`` — use ``from aws_sigv4._log
+  - No ``import logging`` outside ``_log.py`` — use ``from sigv4._log
     import warning`` and call ``warning("static message")`` only
   - ``warning()`` accepts only ``LiteralString`` — no variables, ever
   - No ``# type: ignore`` anywhere in ``src/``

@@ -4,7 +4,7 @@
 
 """
 AST-based security check: enforce credential leak prevention rules across
-all source files under src/aws_sigv4/.
+all source files under src/sigv4/.
 
 Rules enforced:
   1. No print() calls anywhere in src/
@@ -27,7 +27,7 @@ import ast
 import sys
 from pathlib import Path
 
-SRC_DIR = Path(__file__).parent.parent / "src" / "aws_sigv4"
+SRC_DIR = Path(__file__).parent.parent / "src" / "sigv4"
 LOG_MODULE = "_log.py"
 
 # Exception classes permitted in raise statements.
@@ -90,7 +90,7 @@ def check_file(path: Path) -> None:
                         err(
                             path,
                             node.lineno,
-                            "import logging is banned — use aws_sigv4._log.warning()",
+                            "import logging is banned — use sigv4._log.warning()",
                         )
 
             if isinstance(node, ast.ImportFrom):
@@ -100,7 +100,7 @@ def check_file(path: Path) -> None:
                     err(
                         path,
                         node.lineno,
-                        "from logging import ... is banned — use aws_sigv4._log.warning()",
+                        "from logging import ... is banned — use sigv4._log.warning()",
                     )
 
             if isinstance(node, ast.Call):
@@ -114,7 +114,7 @@ def check_file(path: Path) -> None:
                         err(
                             path,
                             node.lineno,
-                            f"{node.func.value.id}.{node.func.attr}() is banned — use aws_sigv4._log.warning()",
+                            f"{node.func.value.id}.{node.func.attr}() is banned — use sigv4._log.warning()",
                         )
 
         # Rule 4 & 5: raise statements

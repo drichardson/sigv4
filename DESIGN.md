@@ -2,7 +2,7 @@
 
 ## Overview
 
-`aws-sigv4` is a minimal Python library for signing HTTP requests with AWS
+`sigv4` is a minimal Python library for signing HTTP requests with AWS
 Signature Version 4 and resolving AWS credentials — without pulling in `boto3`
 or `botocore`.
 
@@ -14,7 +14,7 @@ plumbing.
 
 **Zero Python package dependencies.** The library uses only the Python stdlib
 (`hashlib`, `hmac`, `urllib`, `xml.etree`, `configparser`, `threading`,
-`datetime`). Installing `aws-sigv4` adds nothing to your dependency tree beyond
+`datetime`). Installing `sigv4` adds nothing to your dependency tree beyond
 itself. This is a deliberate constraint — new runtime dependencies require
 explicit justification and a strong case.
 
@@ -35,7 +35,7 @@ EC2 instance profiles, or explicit static credentials passed directly to
 ## Code Structure
 
 ```
-src/aws_sigv4/
+src/sigv4/
 ├── __init__.py        # Public API re-exports
 ├── py.typed           # PEP 561 marker (typed package)
 ├── signing.py         # SigV4 algorithm — pure functions, zero I/O
@@ -61,7 +61,7 @@ Does zero I/O. Runs in microseconds. Suitable for callers that manage their
 own credentials and need predictable, non-blocking latency.
 
 ```python
-from aws_sigv4 import Credentials, sign_headers
+from sigv4 import Credentials, sign_headers
 
 headers = sign_headers(
     method="GET",
@@ -80,7 +80,7 @@ Wraps credential resolution, auto-refresh, and signing into a single object.
 Most callers should use this.
 
 ```python
-from aws_sigv4 import Signer
+from sigv4 import Signer
 
 signer = Signer(region="us-east-1", service="s3")
 signer.credentials.refresh()  # optional pre-warm
@@ -274,13 +274,13 @@ AST-based CI check that cannot be suppressed by `# noqa` or `# type: ignore`:
    `urllib.error.HTTPError` can include the response body. Use `from None`
    or omit the cause entirely.
 
-4. **Only `AWSv4SigError` and its subclasses may be raised.** `RuntimeError`
-   and other built-in exceptions are banned. `AWSv4SigError.__init__` accepts
+4. **Only `SigV4Error` and its subclasses may be raised.** `RuntimeError`
+   and other built-in exceptions are banned. `SigV4Error.__init__` accepts
    only a `LiteralString`, enforced by mypy at type-check time.
 
 5. **Logging is restricted to a single internal module** (`_log.py`). No other
    module may import `logging` or call `logging.*` / `logger.*` directly. The
-   public API is `aws_sigv4._log.warning(message: LiteralString)` — only
+   public API is `sigv4._log.warning(message: LiteralString)` — only
    `warning` level is exposed, and only string literals are accepted. This
    prevents variable data (which could contain credentials) from ever being
    logged. An environment variable value, for instance, could be a URL with a
@@ -292,7 +292,7 @@ AST-based CI check that cannot be suppressed by `# noqa` or `# type: ignore`:
    secret material is visible.
 
 7. **`# type: ignore` is banned from all source files under `src/`.** This
-   prevents suppressing the `LiteralString` constraint on `AWSv4SigError` and
+   prevents suppressing the `LiteralString` constraint on `SigV4Error` and
    `warning()`, and prevents bypassing any other mypy check. If mypy reports
    an error, fix the code.
 

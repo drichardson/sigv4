@@ -19,8 +19,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aws_sigv4 import Credentials, sign_headers
-from aws_sigv4.signing import (
+from sigv4 import Credentials, sign_headers
+from sigv4.signing import (
     EMPTY_SHA256,
     _canonical_query_string,
     _canonical_uri,

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from aws_sigv4.providers.config_file import try_load_from_config_file
+from sigv4.providers.config_file import try_load_from_config_file
 
 
 def _write(tmp_path: Path, filename: str, content: str) -> Path:

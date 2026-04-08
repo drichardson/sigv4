@@ -5,16 +5,16 @@
 High-level Signer — credential resolution + auto-refresh + signing.
 
 Most callers should use :class:`Signer` rather than calling
-:func:`aws_sigv4.sign_headers` directly.
+:func:`sigv4.sign_headers` directly.
 """
 
 from datetime import datetime
 
-from aws_sigv4.credentials import (
+from sigv4.credentials import (
     RefreshableCredentials,
 )
-from aws_sigv4.resolve import resolve_credentials
-from aws_sigv4.signing import sign_headers
+from sigv4.resolve import resolve_credentials
+from sigv4.signing import sign_headers
 
 
 class Signer:
@@ -42,7 +42,7 @@ class Signer:
     Args:
         region: AWS region name (e.g. ``"us-east-1"``).
         service: AWS service name (e.g. ``"s3"``, ``"execute-api"``).
-        credentials: A :class:`~aws_sigv4.credentials.RefreshableCredentials`
+        credentials: A :class:`~sigv4.credentials.RefreshableCredentials`
             instance. If omitted, credentials are resolved from the standard
             chain (env vars → IRSA → config file → container → IMDS).
     """

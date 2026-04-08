@@ -1,4 +1,4 @@
-# aws-sigv4
+# sigv4
 
 Sign AWS HTTP requests with AWS Signature Version 4 — no `boto3` or `botocore` required.
 
@@ -8,10 +8,10 @@ Supports IRSA (IAM Roles for Service Accounts on EKS), ECS task roles, EC2 insta
 
 ```sh
 # uv
-uv add aws-sigv4
+uv add sigv4
 
 # pip
-pip install aws-sigv4
+pip install sigv4
 ```
 
 ## Quick Start
@@ -20,7 +20,7 @@ pip install aws-sigv4
 
 ```python
 import aiohttp
-from aws_sigv4 import Signer
+from sigv4 import Signer
 
 signer = Signer(region="us-east-1", service="execute-api")
 
@@ -40,7 +40,7 @@ async with aiohttp.ClientSession() as session:
 ### Low-level API (zero I/O, predictable latency)
 
 ```python
-from aws_sigv4 import Credentials, sign_headers
+from sigv4 import Credentials, sign_headers
 
 # Manage credentials yourself (e.g. fetched via your own IRSA logic)
 creds = Credentials(
@@ -75,7 +75,7 @@ Credentials are resolved in this order:
 ## Observability and Pre-warming
 
 ```python
-from aws_sigv4 import resolve_credentials
+from sigv4 import resolve_credentials
 
 creds = resolve_credentials()
 
@@ -88,7 +88,3 @@ print(creds.expires_at)     # datetime | None
 creds.refresh()
 print(creds.is_ready)       # True
 ```
-
-## License
-
-MIT

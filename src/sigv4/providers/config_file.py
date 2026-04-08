@@ -13,7 +13,7 @@ import configparser
 import os
 from pathlib import Path
 
-from aws_sigv4.credentials import Credentials
+from sigv4.credentials import Credentials
 
 
 def try_load_from_config_file() -> Credentials | None:

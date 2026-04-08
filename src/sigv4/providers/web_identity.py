@@ -22,7 +22,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
-from aws_sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
+from sigv4.credentials import SigV4Error, Credentials, parse_utc_datetime
 
 _STS_ENDPOINT = "https://sts.amazonaws.com/"
 _STS_NS = "https://sts.amazonaws.com/doc/2011-06-15/"
@@ -35,7 +35,7 @@ class WebIdentityProvider:
     Environment variables consumed:
     - ``AWS_WEB_IDENTITY_TOKEN_FILE`` — path to the projected JWT token file
     - ``AWS_ROLE_ARN`` — the IAM role ARN to assume
-    - ``AWS_ROLE_SESSION_NAME`` — optional session name (default: ``aws-sigv4``)
+    - ``AWS_ROLE_SESSION_NAME`` — optional session name (default: ``sigv4``)
     - ``AWS_STS_REGIONAL_ENDPOINTS`` — if set to ``regional``, uses the
       regional STS endpoint derived from ``AWS_DEFAULT_REGION`` or
       ``AWS_REGION``
@@ -55,7 +55,7 @@ class WebIdentityProvider:
                 ``AWS_WEB_IDENTITY_TOKEN_FILE``.
             role_arn: IAM role ARN to assume. Defaults to ``AWS_ROLE_ARN``.
             role_session_name: STS session name. Defaults to
-                ``AWS_ROLE_SESSION_NAME`` or ``"aws-sigv4"``.
+                ``AWS_ROLE_SESSION_NAME`` or ``"sigv4"``.
             sts_endpoint: Override the STS endpoint URL. Defaults to the
                 global endpoint or regional if configured.
         """
@@ -81,7 +81,7 @@ class WebIdentityProvider:
         session_name = (
             self._role_session_name
             or os.environ.get("AWS_ROLE_SESSION_NAME")
-            or f"aws-sigv4-{int(time.time())}"
+            or f"sigv4-{int(time.time())}"
         )
 
         endpoint = self._sts_endpoint or _resolve_sts_endpoint()

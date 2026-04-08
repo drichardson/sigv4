@@ -1,5 +1,5 @@
 [project]
-name = "aws-sigv4"
+name = "sigv4"
 version = "0.1.0"
 description = "Zero Python package dependencies. AWS Signature Version 4 request signing. Supports env vars, IRSA, ECS, EC2, and config file credentials. No boto3 required."
 readme = "README.md"
@@ -22,9 +22,9 @@ classifiers = [
 keywords = ["aws", "sigv4", "signing", "irsa", "authentication"]
 
 [project.urls]
-Documentation = "https://github.com/drichardson/aws-sigv4"
-Issues = "https://github.com/drichardson/aws-sigv4/issues"
-Source = "https://github.com/drichardson/aws-sigv4.git"
+Documentation = "https://github.com/drichardson/sigv4"
+Issues = "https://github.com/drichardson/sigv4/issues"
+Source = "https://github.com/drichardson/sigv4.git"
 
 [dependency-groups]
 dev = [
@@ -43,10 +43,10 @@ build-backend = "uv_build"
 ignore = ["G004"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=aws_sigv4 --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=100"
+addopts = "--cov=sigv4 --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=100"
 
 [tool.coverage.run]
-source = ["aws_sigv4"]
+source = ["sigv4"]
 branch = true
 
 [tool.coverage.report]

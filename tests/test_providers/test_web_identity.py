@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from aws_sigv4.credentials import SigV4Error
-from aws_sigv4.providers.web_identity import WebIdentityProvider, _parse_sts_response
+from sigv4.credentials import SigV4Error
+from sigv4.providers.web_identity import WebIdentityProvider, _parse_sts_response
 
 
 _ROLE_ARN = "arn:aws:iam::123456789012:role/MyRole"
@@ -39,7 +39,7 @@ _STS_ERROR_RESPONSE = b"""
 
 def test_regional_sts_endpoint_used_when_configured(monkeypatch, tmp_path):
     """AWS_STS_REGIONAL_ENDPOINTS=regional + region -> regional STS endpoint."""
-    from aws_sigv4.providers.web_identity import _resolve_sts_endpoint
+    from sigv4.providers.web_identity import _resolve_sts_endpoint
 
     monkeypatch.setenv("AWS_STS_REGIONAL_ENDPOINTS", "regional")
     monkeypatch.setenv("AWS_DEFAULT_REGION", "eu-west-1")
@@ -51,7 +51,7 @@ def test_regional_sts_endpoint_used_when_configured(monkeypatch, tmp_path):
 
 def test_regional_sts_endpoint_falls_back_to_global_when_no_region(monkeypatch):
     """AWS_STS_REGIONAL_ENDPOINTS=regional but no region -> global endpoint."""
-    from aws_sigv4.providers.web_identity import _resolve_sts_endpoint, _STS_ENDPOINT
+    from sigv4.providers.web_identity import _resolve_sts_endpoint, _STS_ENDPOINT
 
     monkeypatch.setenv("AWS_STS_REGIONAL_ENDPOINTS", "regional")
     monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
@@ -62,7 +62,7 @@ def test_regional_sts_endpoint_falls_back_to_global_when_no_region(monkeypatch):
 
 def test_sts_xml_without_namespace_parsed(tmp_path):
     """STS response without xmlns declaration still parses via fallback ns_map."""
-    from aws_sigv4.providers.web_identity import _parse_sts_response
+    from sigv4.providers.web_identity import _parse_sts_response
 
     # Same structure but without the xmlns attribute.
     xml = b"""
@@ -83,7 +83,7 @@ def test_sts_xml_without_namespace_parsed(tmp_path):
 
 def test_sts_xml_missing_field_raises(tmp_path):
     """STS response missing a required field -> RuntimeError from find()."""
-    from aws_sigv4.providers.web_identity import _parse_sts_response
+    from sigv4.providers.web_identity import _parse_sts_response
 
     xml = b"""
 <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
@@ -129,7 +129,7 @@ def test_load_calls_sts(monkeypatch, tmp_path):
     monkeypatch.delenv("AWS_STS_REGIONAL_ENDPOINTS", raising=False)
 
     with patch(
-        "aws_sigv4.providers.web_identity._assume_role_with_web_identity"
+        "sigv4.providers.web_identity._assume_role_with_web_identity"
     ) as mock_sts:
         mock_sts.return_value = _parse_sts_response(_STS_RESPONSE)
         creds = WebIdentityProvider().try_load()

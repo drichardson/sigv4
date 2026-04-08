@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 
-from aws_sigv4.providers.env import try_load_from_env
+from sigv4.providers.env import try_load_from_env
 
 
 def test_returns_none_when_no_env_vars(monkeypatch):

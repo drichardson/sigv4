@@ -10,7 +10,7 @@ Reads ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``, and optionally
 
 import os
 
-from aws_sigv4.credentials import Credentials
+from sigv4.credentials import Credentials
 
 
 def try_load_from_env() -> Credentials | None:
